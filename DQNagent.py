@@ -15,16 +15,38 @@ class DQNAgent:
         self.epsilon_decay = 0.995
         self.learning_rate = 0.001
         self.model = self._build_model
-        self.numpymatrix = np.zeros((210,160))
+        self.numpymatrix = np.zeros((210, 160))
 
+
+    def preprocessInit(self,observation, i_episode):
+
+        if i_episode == 0:
+            self.RGBToGrayScaleDict = dict()
+            notNullRGBIndexArray = observation.nonzero()
+            length = np.count_nonzero(notNullRGBIndexArray)
+
+            for i in range(0,length/3,4):
+                    strRGB = str(observation[notNullRGBIndexArray[0][i]][notNullRGBIndexArray[1][i]])
+                    self.RGBToGrayScaleDict[strRGB] = observation[notNullRGBIndexArray[0][i]][notNullRGBIndexArray[1][i]][0] * 0.299 \
+                                                      + observation[notNullRGBIndexArray[0][i]][notNullRGBIndexArray[1][i]][1] * 0.587 \
+                                                      + observation[notNullRGBIndexArray[0][i]][notNullRGBIndexArray[1][i]][2] * 0.114
+            print(self.RGBToGrayScaleDict)
 
     def preprocess(self,  observation):
-        myindexarray = observation.nonzero()# elmentjuk azokat az indexeket egy tombbe,ahol nem csupa 0 az RGB kod
 
-        for i in range(0, np.count_nonzero(myindexarray) / 4 , 4):# minden 4. index veszunk csak, mert azok reprezentalnak egy uj pixelt
-                self.numpymatrix[myindexarray[0][i]][myindexarray[1][i]] = observation[myindexarray[0][i]][myindexarray[1][i]][0] * 0.299\
-                                         + observation[myindexarray[0][i]][myindexarray[1][i]][1] * 0.587\
-                                         + observation[myindexarray[0][i]][myindexarray[1][i]][2] * 0.114
+        notNullRGBIndexArray = observation.nonzero()
+        arrayLength = np.count_nonzero(notNullRGBIndexArray)
+
+        for i in range(0, arrayLength / 3 , 4):# minden 4. index veszunk csak, mert azok reprezentalnak egy uj pixelt
+                Red = observation[notNullRGBIndexArray[0][i]][notNullRGBIndexArray[1][i]][0]
+                Green = observation[notNullRGBIndexArray[0][i]][notNullRGBIndexArray[1][i]][1]
+                Blue = observation[notNullRGBIndexArray[0][i]][notNullRGBIndexArray[1][i]][2]
+
+                if (Red == Green and Green == Blue):
+                    self.numpymatrix[notNullRGBIndexArray[0][i]][notNullRGBIndexArray[1][i]] = Red
+
+                self.numpymatrix[notNullRGBIndexArray[0][i]][notNullRGBIndexArray[1][i]] = Red * 0.299 + Green * 0.587 + Blue * 0.114
+
         return self.numpymatrix
 
     def _build_model(self):
@@ -58,9 +80,10 @@ if __name__ == "__main__":
 
     for i_episode in range(EPISODES):
         observation = env.reset()
+        agent.preprocessInit(observation,i_episode)
         fi = agent.preprocess(observation)
 
-        for t in range(1000):
+        for t in range(500):
             action = agent.getAction()
             env.render()
             observation,reward, done, info = env.step(action)
