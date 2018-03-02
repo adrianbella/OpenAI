@@ -16,25 +16,26 @@ class DQNAgent:
         self.epsilon_decay = 0.995
         self.learning_rate = 0.001
         self.model = self._build_model
-        self.numpymatrix = np.zeros((158, 144)) #jatekter
+        self.numpyMatrix = np.zeros((84, 84))
 
     def preprocess(self,  observation):
 
-        notNullRGBIndexArray = observation.nonzero()
-        arrayLength = notNullRGBIndexArray[0].__len__()
+        observation_gray_cropped = np.zeros((158, 144))
+        observation_gray = observation * [0.299, 0.587, 0.114]  # gray-scale
 
-        for i in range(0, arrayLength , 3):# minden 4. index veszunk csak, mert azok reprezentalnak egy uj pixelt
+        notNullRGBIndexArray = observation_gray.nonzero()
+        length = notNullRGBIndexArray[0].__len__()
+
+        for i in range(0, length, 3):  # minden 4. index veszunk csak, mert azok reprezentalnak egy uj pixelt
             x = notNullRGBIndexArray[1][i]
             y = notNullRGBIndexArray[0][i]
 
-            if(31 < y < 190  and 7 < x < 152):
-                        Red = observation[y][x][0]
-                        Green = observation[y][x][1]
-                        Blue = observation[y][x][2]
+            if (31 < y < 190 and 7 < x < 152):#cropping
+                observation_gray_cropped[(y - 32)][(x - 8)] = observation_gray[y][x][0]+observation_gray[y][x][1]+observation_gray[y][x][2]
 
-                        self.numpymatrix[(y-32)][(x-8)] = Red * 0.299 + Green * 0.587 + Blue * 0.114
+        self.numpyMatrix = imresize(observation_gray_cropped,(84, 84)) #down-scale
 
-        return self.numpymatrix
+        return self.numpyMatrix
 
     def _build_model(self):
         model = 1
@@ -66,14 +67,24 @@ if __name__ == "__main__":
     done = False
 
     for i_episode in range(EPISODES):
+        DQNinput = np.zeros((4, 84, 84))
         observation = env.reset()
-        fi = agent.preprocess(observation)
+        DQNinput[0] = agent.preprocess(observation)
 
         for t in range(500):
             action = agent.getAction()
             env.render()
             observation,reward, done, info = env.step(action)
-            fi = agent.preprocess(observation)
+
+
+            if t >= 3:
+                DQNinput[0] = DQNinput[1]
+                DQNinput[1] = DQNinput[2]
+                DQNinput[2] = DQNinput[3]
+                DQNinput[3] = agent.preprocess(observation)
+                fi = DQNinput
+            else:
+                DQNinput[(t + 1) % 4] = agent.preprocess(observation)
 
             if done:
                 print("Episode finished after {} timesteps".format(t + 1))
