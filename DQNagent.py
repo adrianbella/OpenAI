@@ -1,52 +1,34 @@
 import random
-import gym as gym
 import numpy as np
 from collections import deque
-from scipy.misc import imread, imsave, imresize
 
-EPISODES = 1000
-
+import DQNmodel as model
 
 class DQNAgent:
-    def __init__(self):
+    def __init__(self,env):
         self.memory = deque(maxlen=2000)
         self.gamma = 0.95    # discount rate
         self.epsilon = 0.9  # exploration rate
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.995
         self.learning_rate = 0.001
-        self.model = self._build_model
+        self.env = env
 
-    def preprocess(self, observation):
+    def remember(self, state, action, reward, next_state):
+        self.memory.append((state, action, reward, next_state))
 
-        observation_gray_cropped = np.zeros((158, 144))
+    def action(self, fi_t):
 
-        observation_gray = observation * [0.299, 0.587, 0.114]  # gray-scale
+        num_random = random.uniform(0, 1)
 
-        notNullRGBIndexArray = observation_gray.nonzero()
-        length = notNullRGBIndexArray[0].__len__()
+        if num_random <= self.epsilon:
+            return self.env.action_space.sample()
 
-        for i in range(0, length, 3):  # get every 4th index, because they're represent a new pixel
-            x = notNullRGBIndexArray[1][i]
-            y = notNullRGBIndexArray[0][i]
+        action = model.predict(fi_t)
 
-            if (31 < y < 190 and 7 < x < 152):  # cropping
-                observation_gray_cropped[(y - 32)][(x - 8)] = observation_gray[y][x][0] + observation_gray[y][x][1] + observation_gray[y][x][2]
-
-        numpy_matrix = imresize(observation_gray_cropped, (84, 84))  # down-scale
-
-        return numpy_matrix
-
-    def _build_model(self):
-        model = 1
-        return model
+        return np.argmax(action[0])
 
 
-    def remember(self, state, action, reward, next_state, done):
-        self.memory.append((state, action, reward, next_state, done))
-
-    def get_action(self):
-        return env.action_space.sample()
 
     def replay(self, batch_size):
         minibatch = random.sample(self.memory, batch_size)
@@ -55,43 +37,17 @@ class DQNAgent:
             target = reward
 
             if not done:
-                target = (reward + self.gamma * np.amax(self.model.predict(next_state)[0]))
+                target = (reward + self.gamma * np.amax(model.predict(next_state)[0]))
 
-            target_f = self.model.predict(state)
+            target_f = model.predict(state)
             target_f[0][action] = target
-            self.model.fit(state, target_f, epochs=1, verbose=0)
+            model.fit(state, target_f, epochs=1, verbose=0)
 
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 
+    def load(self, name):
+        model.load_weights(name)
 
-if __name__ == "__main__":
-    env = gym.make('Breakout-v0')
-    agent = DQNAgent()
-    done = False
-    batch_size = 32
-
-    for i_episode in range(EPISODES):
-        DQNinput = np.zeros((4, 84, 84))  # initialization of the network input
-        observation = env.reset()  # s1 = {x1}
-        DQNinput[0] = agent.preprocess(observation)  # fi1 = fi(s1)
-
-        for t in range(500):
-            action = agent.get_action()
-            env.render()
-            observation, reward, done, info = env.step(action)
-
-            if t >= 3:
-                DQNinput[0] = DQNinput[1]  # overlap
-                DQNinput[1] = DQNinput[2]
-                DQNinput[2] = DQNinput[3]
-                DQNinput[3] = agent.preprocess(observation)
-                fi = DQNinput
-            else:
-                DQNinput[(t + 1)] = agent.preprocess(observation)
-
-            if done:
-                print("Episode finished after {} timesteps".format(t + 1))
-                print(info)
-                break
-
+    def save(self, name):
+        model.save_weights(name)
