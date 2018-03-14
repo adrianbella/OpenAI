@@ -1,15 +1,14 @@
 import gym as gym
 import numpy as np
 
-from DQNagent import DQNAgent
-from StateBuilder import StateBuilder
+from agent import DQNAgent
+from state_builder import StateBuilder
 
 EPISODES = 1000
 
 if __name__ == "__main__":
     env = gym.make('Breakout-v0')
     agent = DQNAgent(env)
-    sb = StateBuilder()
     done = False
     batch_size = 32
     # agent.load("./save/breakout.h5")
@@ -19,7 +18,7 @@ if __name__ == "__main__":
     for i_episode in range(EPISODES):
         CNN_input_stack = np.zeros((5, 84, 84))  # initialization of the CNN input
         observation = env.reset()  # s1 = {x1}
-        CNN_input_stack[0] = sb.preprocess(observation)
+        CNN_input_stack[0] = StateBuilder.pre_process(observation)
         action = env.action_space.sample()
 
         for t in range(500):
@@ -38,14 +37,14 @@ if __name__ == "__main__":
                 CNN_input_stack[1] = CNN_input_stack[2]
                 CNN_input_stack[2] = CNN_input_stack[3]
                 CNN_input_stack[3] = CNN_input_stack[4]
-                CNN_input_stack[4] = sb.preprocess(observation)
+                CNN_input_stack[4] = StateBuilder.pre_process(observation)
 
                 fi_t1 = CNN_input_stack[1:5]  # fi_t+1 = fi(s_t+1)
 
-                agent.remember(fi_t, action, reward, fi_t1)
+                agent.remember(fi_t, action, reward, fi_t1,done)
 
             else:
-                CNN_input_stack[(t + 1)] = sb.preprocess(observation)
+                CNN_input_stack[(t + 1)] = StateBuilder.pre_process(observation)
 
             if done:
                 print("Episode finished after {} timesteps".format(t + 1))
