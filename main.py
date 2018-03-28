@@ -5,15 +5,19 @@ import logging
 
 from agent import DQNAgent
 from state_builder import StateBuilder
+from video import VideoRecorder
 
 EPISODES = 1000
 
 if __name__ == "__main__":
+
     env = gym.make('Breakout-v0')
     action_size = env.action_space.n
     agent = DQNAgent(env, action_size)
+    video = VideoRecorder()
     done = False
     batch_size = 32
+
     logging.basicConfig(filename='./log/'+str(datetime.datetime.now())+'.log', level=logging.DEBUG)
     # agent.load("./save/breakout.h5")
 
@@ -28,6 +32,8 @@ if __name__ == "__main__":
         for t in range(5000):
 
             env.render()
+
+            video.record(observation)  # start video-recording
 
             if t >= 4:
 
@@ -66,4 +72,6 @@ if __name__ == "__main__":
         if i_episode % 100 == 0:
             filename = "./save/breakout_"+str(datetime.datetime.now())+".h5"
             agent.save(filename)
+
+    video.stop()  # stop video-recording
 
