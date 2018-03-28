@@ -1,0 +1,11 @@
+INFO:root:Generating grammar tables from /usr/lib/python2.7/lib2to3/Grammar.txt
+INFO:root:Generating grammar tables from /usr/lib/python2.7/lib2to3/PatternGrammar.txt
+INFO:root:episode: 0/1000, score: 3.0, epsilone: 0.9, timestep: 303
+INFO:root:episode: 1/1000, score: 0.0, epsilone: 0.9, timestep: 173
+INFO:root:episode: 2/1000, score: 1.0, epsilone: 0.89, timestep: 229
+INFO:root:episode: 3/1000, score: 1.0, epsilone: 0.89, timestep: 246
+INFO:root:episode: 4/1000, score: 3.0, epsilone: 0.88, timestep: 357
+INFO:root:episode: 5/1000, score: 1.0, epsilone: 0.88, timestep: 235
+INFO:root:episode: 6/1000, score: 0.0, epsilone: 0.87, timestep: 168
+INFO:root:episode: 7/1000, score: 0.0, epsilone: 0.87, timestep: 179
+INFO:root:episode: 8/1000, score: 1.0, epsilone: 0.86, timestep: 226
