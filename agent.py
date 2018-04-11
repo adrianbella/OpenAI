@@ -5,16 +5,17 @@ from model import DQNModel
 
 
 class DQNAgent:
-    def __init__(self, env, action_size):
-        self.memory = deque(maxlen=2000)
-        self.gamma = 0.95    # discount rate
-        self.epsilon = 0.9  # exploration rate
-        self.epsilon_min = 0.01
-        self.epsilon_decay = 0.995
-        self.learning_rate = 0.001
+
+    def __init__(self, env, action_size, config):
+        self.memory = deque(maxlen=int(config.config_section_map()['memorysize']))
+        self.gamma = float(config.config_section_map()['gamma'])    # discount rate
+        self.epsilon = float(config.config_section_map()['epsilon'])  # exploration rate
+        self.epsilon_min = float(config.config_section_map()['epsilonmin'])
+        self.epsilon_decay = float(config.config_section_map()['epsilondecay'])
+        self.learning_rate = float(config.config_section_map()['learningrate'])
         self.action_size = action_size
         self.env = env
-        self.dqn_model = DQNModel(self.learning_rate)
+        self.dqn_model = DQNModel(self.learning_rate, action_size)
 
     def remember(self, state, action, reward, next_state):
         self.memory.append((state, action, reward, next_state))
@@ -38,6 +39,9 @@ class DQNAgent:
 
             next_state = np.expand_dims(next_state, axis=0)
             state = np.expand_dims(state, axis=0)
+
+            next_state = next_state.astype(float)
+            state = state.astype(float)
 
             if done:
                 target = reward

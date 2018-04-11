@@ -6,17 +6,19 @@ import logging
 from agent import DQNAgent
 from state_builder import StateBuilder
 from video import VideoRecorder
-
-EPISODES = 1000
+from config import MyConfigParser
 
 if __name__ == "__main__":
 
-    env = gym.make('Breakout-v0')
+    config = MyConfigParser('BreakoutV1')
+    env = gym.make(config.config_section_map()['game'])
     action_size = env.action_space.n
-    agent = DQNAgent(env, action_size)
+    agent = DQNAgent(env, action_size, config)
     video = VideoRecorder()
+
     done = False
-    batch_size = 32
+    batch_size = int(config.config_section_map()['batchsize'])
+    EPISODES = int(config.config_section_map()['episodes'])
 
     logging.basicConfig(filename='./log/'+str(datetime.datetime.now())+'.log', level=logging.DEBUG)
     # agent.load("./save/breakout.h5")
@@ -29,7 +31,7 @@ if __name__ == "__main__":
         done = False
         sum_reward = 0
 
-        for t in range(5000):
+        for t in range(500000):
 
             env.render()
 
@@ -52,7 +54,13 @@ if __name__ == "__main__":
 
                 fi_t1 = CNN_input_stack[1:5]  # fi_t+1 = fi(s_t+1)
 
+                fi_t = fi_t.astype('uint8')
+                fi_t1 = fi_t1.astype('uint8')
+
                 agent.remember(fi_t, action, reward, fi_t1)  # Store transition (fi_t,a_t,r_t,fi_t+1) in D
+
+                if len(agent.memory) > batch_size:  # Sample random minibatch of transitions() from D
+                    agent.replay(batch_size, done)
 
             else:
                 CNN_input_stack[(t + 1)] = StateBuilder.pre_process(observation)
@@ -65,9 +73,6 @@ if __name__ == "__main__":
                 break
 
         agent.dqn_model.update_target_model()  # update target model every C step
-
-        if len(agent.memory) > batch_size:
-            agent.replay(batch_size, done)
 
         if i_episode % 100 == 0:
             filename = "./save/breakout_"+str(datetime.datetime.now())+".h5"

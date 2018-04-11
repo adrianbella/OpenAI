@@ -1,12 +1,13 @@
 from keras import Sequential
-from keras.layers import Convolution2D, MaxPooling2D
+from keras.layers import Convolution2D
 from keras.layers import Dense, Flatten
 from keras.optimizers import Adam
 
 
 class DQNModel:
-    def __init__(self, learning_rate):
+    def __init__(self, learning_rate, action_size):
         self.learning_rate = learning_rate
+        self.action_size = action_size
         self.model = self._build_model()
         self.target_model = self._build_model()
         self.update_target_model()
@@ -14,19 +15,17 @@ class DQNModel:
     def _build_model(self):
         model = Sequential()
 
-        #Add convolutional and normalization layers
-        model.add(Convolution2D(filters=16, kernel_size=8, strides=4, activation='relu'
+        #  Add convolutional and normalization layers
+        model.add(Convolution2D(filters=32, kernel_size=8, strides=4, activation='relu'
                                 , input_shape=(4, 84, 84), data_format='channels_first'))
-        model.add(Convolution2D(filters=32, kernel_size=4, strides=2, activation='relu'))
-
-        # reduce the num of parameters in our model by sliding a 2x2 pooling filter
-        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Convolution2D(filters=64, kernel_size=4, strides=2, activation='relu'))
+        model.add(Convolution2D(filters=64, kernel_size=3, strides=1, activation='relu'))
 
         # make convolution layers falttend (1 dimensional)
         model.add(Flatten())
-        #add FC layers
-        model.add(Dense(256, activation='relu'))
-        model.add(Dense(4, activation='softmax'))
+        #  add FC layers
+        model.add(Dense(512, activation='relu'))
+        model.add(Dense(self.action_size, activation='linear'))
 
         # configure learning process
         model.compile(loss='mse',

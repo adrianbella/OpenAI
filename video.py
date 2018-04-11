@@ -1,7 +1,5 @@
 import cv2
 import numpy as np
-import pyscreenshot as ImageGrab
-
 
 
 class VideoRecorder:
@@ -13,7 +11,6 @@ class VideoRecorder:
 
     def record(self, img):
 
-        #img = ImageGrab.grab()
         img_np = np.array(img)
 
         self.out.write(img_np)
