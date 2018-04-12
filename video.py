@@ -10,9 +10,7 @@ class VideoRecorder:
         self.out = cv2.VideoWriter('./videos/output.avi', self.fourcc, 40.0, (160, 210))
 
     def record(self, img):
-
         img_np = np.array(img)
-
         self.out.write(img_np)
         cv2.imshow("Screen", img_np)
 

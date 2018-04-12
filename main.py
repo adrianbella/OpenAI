@@ -7,6 +7,8 @@ from agent import DQNAgent
 from state_builder import StateBuilder
 from video import VideoRecorder
 from config import MyConfigParser
+from chart import MyChart
+from keras.callbacks import CSVLogger
 
 if __name__ == "__main__":
 
@@ -20,7 +22,17 @@ if __name__ == "__main__":
     batch_size = int(config.config_section_map()['batchsize'])
     EPISODES = int(config.config_section_map()['episodes'])
 
-    logging.basicConfig(filename='./log/'+str(datetime.datetime.now())+'.log', level=logging.DEBUG)
+    csv_logger = CSVLogger('./csv/'
+                           +env.env._ezpickle_args[0]
+                           +'_'
+                           +str(datetime.datetime.now())
+                           +'_'
+                           +config.section
+                           +'_'
+                           +'_training.log',append=True)
+    logging.basicConfig(filename='./log/' + str(datetime.datetime.now()) + '.log', level=logging.DEBUG)
+    config.config_log_parameters(logging)  # log the used parameters
+
     # agent.load("./save/breakout.h5")
 
     for i_episode in range(EPISODES):
@@ -59,8 +71,8 @@ if __name__ == "__main__":
 
                 agent.remember(fi_t, action, reward, fi_t1)  # Store transition (fi_t,a_t,r_t,fi_t+1) in D
 
-                if len(agent.memory) > batch_size:  # Sample random minibatch of transitions() from D
-                    agent.replay(batch_size, done)
+                if len(agent.memory) > batch_size and t % 150 == 0: #TODO:Ez minden ciklusba lefut???  # Sample random minibatch of transitions() from D
+                    agent.replay(batch_size, done, csv_logger)
 
             else:
                 CNN_input_stack[(t + 1)] = StateBuilder.pre_process(observation)
@@ -73,6 +85,8 @@ if __name__ == "__main__":
                 break
 
         agent.dqn_model.update_target_model()  # update target model every C step
+
+        MyChart.paint_result_chart()
 
         if i_episode % 100 == 0:
             filename = "./save/breakout_"+str(datetime.datetime.now())+".h5"
