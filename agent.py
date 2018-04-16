@@ -2,7 +2,6 @@ import random
 import numpy as np
 from collections import deque
 from model import DQNModel
-from chart import MyChart
 
 
 class DQNAgent:
@@ -51,12 +50,13 @@ class DQNAgent:
 
             target_f = self.dqn_model.model.predict(state)
             target_f[0][action] = target
-            #Trains the model for a fixed number of epochs (iterations on a dataset)
 
+            #Trains the model for a fixed number of epochs (iterations on a dataset)
             self.dqn_model.model.fit(state, target_f, epochs=1, verbose=0, callbacks=[csv_logger])
 
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
+        if done:
+            if self.epsilon > self.epsilon_min:
+                self.epsilon *= self.epsilon_decay
 
     def load(self, name):
         self.dqn_model.model.load_weights(name)

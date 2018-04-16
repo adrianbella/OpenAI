@@ -1,13 +1,13 @@
 import cv2
 import numpy as np
-
+import datetime
 
 class VideoRecorder:
 
-    def __init__(self):
+    def __init__(self, config):
         # Define the codec and create VideoWriter object
         self.fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
-        self.out = cv2.VideoWriter('./videos/output.avi', self.fourcc, 40.0, (160, 210))
+        self.out = cv2.VideoWriter('./videos/'+config + '_Day_' + datetime.date.today().strftime("%j") + '.avi', self.fourcc, 30.0, (160, 210))
 
     def record(self, img):
         img_np = np.array(img)
