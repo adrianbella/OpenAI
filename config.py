@@ -17,12 +17,4 @@ class MyConfigParser:
                 dict1[option] = None
         return dict1
 
-    def config_log_parameters(self, logging):
-        dict1 = {}
-        options = self.config.options(self.section)
-        logging.info("Section: {}".format(self.section))
-        for option in options:
-            try:
-                logging.info("\t\t {} : {}".format(option, self.config.get(self.section, option)))
-            except:
-                dict1[option] = None
+

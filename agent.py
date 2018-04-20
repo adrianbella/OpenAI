@@ -18,6 +18,9 @@ class DQNAgent:
         self.dqn_model = DQNModel(self.learning_rate, action_size)
 
     def remember(self, state, action, reward, next_state):
+        state = state.astype('uint8')
+        next_state= next_state.astype('uint8')
+
         self.memory.append((state, action, reward, next_state))
 
     def action(self, fi_t):
@@ -43,16 +46,17 @@ class DQNAgent:
             next_state = next_state.astype(float)
             state = state.astype(float)
 
-            if done:
-                target = reward
-            else:
-                target = (reward + self.gamma * np.amax(self.dqn_model.target_model.predict(next_state)[0]))
+            target = self.dqn_model.model.predict(state)
 
-            target_f = self.dqn_model.model.predict(state)
-            target_f[0][action] = target
+            if done:
+                target[0][action] = reward
+            else:
+                a = self.dqn_model.model.predict(next_state)[0]
+                t = self.dqn_model.target_model.predict(next_state)[0]
+                target[0][action] = reward + self.gamma * t[np.argmax(a)]
 
             #Trains the model for a fixed number of epochs (iterations on a dataset)
-            self.dqn_model.model.fit(state, target_f, epochs=1, verbose=0, callbacks=[csv_logger])
+            self.dqn_model.model.fit(state, target, epochs=1, verbose=0, callbacks=[csv_logger])
 
         if done:
             if self.epsilon > self.epsilon_min:
