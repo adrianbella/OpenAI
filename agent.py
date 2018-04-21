@@ -17,11 +17,11 @@ class DQNAgent:
         self.env = env
         self.dqn_model = DQNModel(self.learning_rate, action_size)
 
-    def remember(self, state, action, reward, next_state):
+    def remember(self, state, action, reward, next_state, done):
         state = state.astype('uint8')
         next_state= next_state.astype('uint8')
 
-        self.memory.append((state, action, reward, next_state))
+        self.memory.append((state, action, reward, next_state, done))
 
     def action(self, fi_t):
 
@@ -34,11 +34,11 @@ class DQNAgent:
             action = self.dqn_model.model.predict(fi_t)
             return np.argmax(action[0])
 
-    def replay(self, batch_size, done, csv_logger):
+    def replay(self, batch_size, done, csv_logger, logger):
 
         mini_batch = random.sample(self.memory, batch_size)  # sample random mini_batch from D
 
-        for state, action, reward, next_state in mini_batch:
+        for state, action, reward, next_state, done in mini_batch:
 
             next_state = np.expand_dims(next_state, axis=0)
             state = np.expand_dims(state, axis=0)
@@ -54,6 +54,8 @@ class DQNAgent:
                 a = self.dqn_model.model.predict(next_state)[0]
                 t = self.dqn_model.target_model.predict(next_state)[0]
                 target[0][action] = reward + self.gamma * t[np.argmax(a)]
+
+            logger.log_replay(target, a, t, done)
 
             #Trains the model for a fixed number of epochs (iterations on a dataset)
             self.dqn_model.model.fit(state, target, epochs=1, verbose=0, callbacks=[csv_logger])

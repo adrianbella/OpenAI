@@ -94,7 +94,7 @@ if __name__ == "__main__":
 
                 fi_t1 = CNN_input_stack[1:5]  # fi_t+1 = fi(s_t+1)
 
-                agent.remember(fi_t, action, reward, fi_t1)  # Store transition (fi_t,a_t,r_t,fi_t+1) in D
+                agent.remember(fi_t, action, reward, fi_t1, done)  # Store transition (fi_t,a_t,r_t,fi_t+1) in D
 
                 frame_count += 1
 
@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
                 #  start experience replay after 50000 frames
                 if frame_count > 50000 and t % 4 == 0:
-                    agent.replay(batch_size, done, csv_handler.csv_file_handler)
+                    agent.replay(batch_size, done, csv_handler.csv_file_handler, logger)
                 # ------------------------------------------
 
             else:
