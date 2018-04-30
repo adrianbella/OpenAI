@@ -19,7 +19,7 @@ class DQNAgent:
 
     def remember(self, state, action, reward, next_state, done):
         state = state.astype('uint8')
-        next_state= next_state.astype('uint8')
+        next_state = next_state.astype('uint8')
 
         self.memory.append((state, action, reward, next_state, done))
 
@@ -31,10 +31,10 @@ class DQNAgent:
             return random.randrange(self.action_size)
         else:
             fi_t = np.expand_dims(fi_t, axis=0)
-            action = self.dqn_model.model.predict(fi_t)
+            action = self.dqn_model.model.predict_on_batch(fi_t)
             return np.argmax(action[0])
 
-    def replay(self, batch_size, done, csv_logger, logger):
+    def replay(self, batch_size, done, csv_logger):
 
         mini_batch = random.sample(self.memory, batch_size)  # sample random mini_batch from D
 
@@ -46,26 +46,23 @@ class DQNAgent:
             next_state = next_state.astype(float)
             state = state.astype(float)
 
-            target = self.dqn_model.model.predict(state)
+            target = self.dqn_model.model.predict_on_batch(state)
 
             if done:
                 target[0][action] = reward
             else:
-                a = self.dqn_model.model.predict(next_state)[0]
-                t = self.dqn_model.target_model.predict(next_state)[0]
-                target[0][action] = reward + self.gamma * t[np.argmax(a)]
-
-            logger.log_replay(target, a, t, done)
+                target_Q = self.dqn_model.target_model.predict_on_batch(next_state)
+                target[0][action] = reward + self.gamma * np.amax(target_Q)
 
             #Trains the model for a fixed number of epochs (iterations on a dataset)
             self.dqn_model.model.fit(state, target, epochs=1, verbose=0, callbacks=[csv_logger])
 
-        if done:
-            if self.epsilon > self.epsilon_min:
-                self.epsilon *= self.epsilon_decay
+        if self.epsilon > self.epsilon_min:
+            self.epsilon -= self.epsilon_decay
 
     def load(self, name):
         self.dqn_model.model.load_weights(name)
+        self.dqn_model.update_target_model()
 
     def save(self, name):
         self.dqn_model.model.save_weights(name)

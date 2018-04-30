@@ -34,5 +34,5 @@ class MyLogger:
         print ("Average of the last 10 episodes: {}".format(avg))
 
     def log_replay(self, target, a, t, done):
-        logging.info("\t target: {}, a: {}, t:{} , done: {}".format(target, a, t, done))
-        print ("\t target: {}, a: {}, t:{} , done: {}".format(target, a, t, done))
+        logging.info("target:{}\t a: {}\t t:{}\t done: {}".format(target, a, t, done))
+        print ("\t target: {}\t a: {}\t t:{}\t done: {}".format(target, a, t, done))

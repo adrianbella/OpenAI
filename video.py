@@ -12,8 +12,6 @@ class VideoRecorder:
     def record(self, img):
         img_np = np.array(img)
         self.out.write(img_np)
-        cv2.imshow("Screen", img_np)
 
     def stop(self):
         self.out.release()
-        cv2.destroyAllWindows()

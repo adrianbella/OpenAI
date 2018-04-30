@@ -29,7 +29,8 @@ class DQNModel:
 
         # configure learning process
         model.compile(loss='mse',
-                      optimizer=Adam(lr=self.learning_rate))
+                      optimizer=Adam(lr=self.learning_rate),
+                      metrics=['accuracy'])
 
         return model
 

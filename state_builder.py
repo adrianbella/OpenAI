@@ -25,6 +25,6 @@ class StateBuilder:
                 observation_gray_cropped[(y - 32)][(x - 8)] = observation_gray[y][x][0] + observation_gray[y][x][1] + \
                                                               observation_gray[y][x][2]
 
-        numpy_matrix = imresize(observation_gray_cropped, (84, 84))  # down-scale
+        numpy_matrix = imresize(observation_gray_cropped, (84, 84), interp='nearest')  # down-scale
 
         return numpy_matrix
