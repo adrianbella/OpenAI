@@ -49,10 +49,11 @@ if __name__ == "__main__":
     for i_episode in range(EPISODES):
         CNN_input_stack = np.zeros((5, 84, 84))  # initialization of the CNN input
         observation = env.reset()  # s1 = {x1}
-        CNN_input_stack[0] = StateBuilder.pre_process(observation)
-        CNN_input_stack[1] = StateBuilder.pre_process(observation)
-        CNN_input_stack[2] = StateBuilder.pre_process(observation)
-        CNN_input_stack[3] = StateBuilder.pre_process(observation)
+        CNN_input_stack[0] = StateBuilder.pre_process_cv2(observation)
+        CNN_input_stack[1] = StateBuilder.pre_process_cv2(observation)
+        CNN_input_stack[2] = StateBuilder.pre_process_cv2(observation)
+        CNN_input_stack[3] = StateBuilder.pre_process_cv2(observation)
+        CNN_input_stack[4] = StateBuilder.pre_process_cv2(observation)
 
         last_30_actions = []
 
@@ -61,18 +62,22 @@ if __name__ == "__main__":
 
         for t in range(500000):
 
-            env.render()
+            #env.render()
 
             video.record(observation)  # start video-recording
 
             fi_t = CNN_input_stack[0:4]  # fi_t = fi(s_t)
 
             #  check if last 30 actions was 0 and do random action if true
-            if(len(last_30_actions) == 30 and check_if_do_nothing(last_30_actions)):
-                action = env.action_space.sample()
-                last_30_actions = []
+            if len(last_30_actions) == 30:
+                if check_if_do_nothing(last_30_actions):
+                    action = env.action_space.sample()
+                else:
+                    action = agent.action(fi_t, env.action_space.sample())
+                last_30_actions.pop(0)
+                last_30_actions.append(action)
             else:
-                action = agent.action(fi_t)
+                action = agent.action(fi_t, env.action_space.sample())
                 last_30_actions.append(action)
             # --------------------------------------------
 
@@ -87,7 +92,7 @@ if __name__ == "__main__":
             CNN_input_stack[1] = CNN_input_stack[2]
             CNN_input_stack[2] = CNN_input_stack[3]
             CNN_input_stack[3] = CNN_input_stack[4]
-            CNN_input_stack[4] = StateBuilder.pre_process(observation)
+            CNN_input_stack[4] = StateBuilder.pre_process_cv2(observation)
 
             fi_t1 = CNN_input_stack[1:5]  # fi_t+1 = fi(s_t+1)
 
@@ -102,8 +107,10 @@ if __name__ == "__main__":
 
             #  start experience replay after 50000 frames
             if frame_count > 50000 and t % 4 == 0:
-                agent.replay(batch_size, done, csv_handler.csv_file_handler)
+                agent.replay(batch_size, csv_handler.csv_file_handler)
             # ------------------------------------------
+
+            agent.decrease_epsilone()  # decrease the value of epsilone from 1.0 to 0.9 in 1.000.000 frames
 
             if done:
                 logger.log_episode(i_episode, EPISODES, sum_reward, agent.epsilon, t, max_reward)
