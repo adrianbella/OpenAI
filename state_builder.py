@@ -1,5 +1,3 @@
-from scipy.misc import imresize
-import numpy as np
 import cv2
 
 

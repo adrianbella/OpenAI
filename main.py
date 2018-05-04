@@ -28,12 +28,12 @@ if __name__ == "__main__":
     env = gym.make(config.config_section_map()['game'])
     action_size = env.action_space.n
 
-    agent = DQNAgent(env, action_size, config)
-
-    video = VideoRecorder(config.section)
-
     batch_size = int(config.config_section_map()['batchsize'])
     EPISODES = int(config.config_section_map()['episodes'])
+
+    agent = DQNAgent(env, action_size, config, batch_size)
+
+    video = VideoRecorder(config.section)
 
     csv_handler = MyCSVHandler(config)
 
@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
             #env.render()
 
-            video.record(observation)  # start video-recording
+            #video.record(observation)  # start video-recording
 
             fi_t = CNN_input_stack[0:4]  # fi_t = fi(s_t)
 
@@ -88,11 +88,13 @@ if __name__ == "__main__":
             if(sum_reward > max_reward):
                 max_reward = sum_reward
 
-            CNN_input_stack[0] = CNN_input_stack[1]  # overlap
+            # overlap
+            CNN_input_stack[0] = CNN_input_stack[1]
             CNN_input_stack[1] = CNN_input_stack[2]
             CNN_input_stack[2] = CNN_input_stack[3]
             CNN_input_stack[3] = CNN_input_stack[4]
             CNN_input_stack[4] = StateBuilder.pre_process_cv2(observation)
+            # --------------------------------------------
 
             fi_t1 = CNN_input_stack[1:5]  # fi_t+1 = fi(s_t+1)
 
@@ -125,7 +127,7 @@ if __name__ == "__main__":
             for i in last_ten_rewards:
                 avg += i
 
-            logger.log_10_avg((avg / len(last_ten_rewards)))
+            logger.log_10_avg_and_framecount((avg / len(last_ten_rewards)), frame_count)
             last_ten_rewards = []
         # ----------------------------------------------------
 
@@ -136,5 +138,3 @@ if __name__ == "__main__":
         # -----------------------------------------------------
 
     video.stop()  # stop video-recording
-
-

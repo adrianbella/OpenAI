@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import datetime
 
+
 class VideoRecorder:
 
     def __init__(self, config):

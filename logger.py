@@ -29,10 +29,6 @@ class MyLogger:
         print("episode: {}/{}, score: {}, epsilone: {:.2}, timestep: {}, maximum reward: {}"
               .format(i_episode, EPISODES, sum_reward, epsilon, t, max_reward))
 
-    def log_10_avg(self, avg):
-        logging.info("Average of the last 10 episodes: {}".format(avg))
-        print ("Average of the last 10 episodes: {}".format(avg))
-
-    def log_replay(self, target, a, t, done):
-        logging.info("target:{}\t a: {}\t t:{}\t done: {}".format(target, a, t, done))
-        print ("\t target: {}\t a: {}\t t:{}\t done: {}".format(target, a, t, done))
+    def log_10_avg_and_framecount(self, avg, frame_count):
+        logging.info("Average of the last 10 episodes: {}, number of frames: {}".format(avg, frame_count))
+        print ("Average of the last 10 episodes: {}, number of frames: {}".format(avg, frame_count))

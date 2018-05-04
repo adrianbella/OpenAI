@@ -5,19 +5,19 @@ from keras.optimizers import Adam
 
 
 class DQNModel:
-    def __init__(self, learning_rate, action_size):
+    def __init__(self, learning_rate, action_size, batch_size):
         self.learning_rate = learning_rate
         self.action_size = action_size
-        self.model = self._build_model()
-        self.target_model = self._build_model()
+        self.model = self._build_model(batch_size)
+        self.target_model = self._build_model(batch_size)
         self.update_target_model()
 
-    def _build_model(self):
+    def _build_model(self, batch_size):
         model = Sequential()
 
         #  Add convolutional and normalization layers
         model.add(Convolution2D(filters=32, kernel_size=8, strides=4, activation='relu'
-                                , input_shape=(4, 84, 84), data_format='channels_first'))
+                                , batch_input_shape=(None, 4, 84, 84), data_format='channels_first'))
         model.add(Convolution2D(filters=64, kernel_size=4, strides=2, activation='relu'))
         model.add(Convolution2D(filters=64, kernel_size=3, strides=1, activation='relu'))
 
