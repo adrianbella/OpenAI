@@ -17,7 +17,7 @@ class DQNAgent:
         self.learning_rate = float(config.config_section_map()['learningrate'])
         self.action_size = action_size
         self.env = env
-        self.dqn_model = DQNModel(self.learning_rate, action_size, batch_size)
+        self.dqn_model = DQNModel(self.learning_rate, action_size)
 
     def remember(self, state, action, reward, next_state, done):
         state = state.astype('uint8')
@@ -33,16 +33,16 @@ class DQNAgent:
             return env_sample
         else:
             fi_t = np.expand_dims(fi_t, axis=0)
-            action = self.dqn_model.model.predict(fi_t)
+            action = self.dqn_model.model.predict([fi_t, np.ones([1, self.action_size])])
             return np.argmax(action[0])
 
     def replay(self, batch_size, csv_logger):
 
         states = np.zeros((batch_size, 4, 84, 84), dtype=float)
-        actions = np.zeros((batch_size, 1), dtype=int)
+        actions = np.zeros((batch_size, 4), dtype=int)
         rewards = np.zeros((batch_size, 1), dtype=float)
         next_states = np.zeros((batch_size, 4, 84, 84), dtype=float)
-        dones = np.ones((batch_size, 4), dtype=float)
+        dones = np.ones((batch_size, 4), dtype=bool)
 
         mini_batch = random.sample(self.memory, batch_size)  # sample random mini_batch from D
 
@@ -54,25 +54,22 @@ class DQNAgent:
             state = state.astype(float)
 
             states[i] = state
-            actions[i] = action
+            actions[i][action] = 1
             rewards[i] = reward
             next_states[i] = next_state
-            if done:
-                dones[i][action] = 0
+            dones[i] = [done, done, done, done]
 
             i += 1
 
-        target_q_values = self.dqn_model.model.predict_on_batch([states])
-        target_q_values *= dones
+        next_state_q_values = self.dqn_model.target_model.predict([next_states, np.ones(actions.shape)])
 
-        next_state_q_values = self.dqn_model.target_model.predict_on_batch([next_states])
+        next_state_q_values[dones] = 0
+
         Q_values = (rewards + self.gamma * np.max(next_state_q_values, axis=1))[0]
 
-        for i in range(batch_size):
-            target_q_values[i][actions[i]] = Q_values[i]
-
         #  Trains the model for a fixed number of epochs (iterations on a dataset)
-        self.dqn_model.model.fit(states, target_q_values, epochs=1, verbose=0, callbacks=[csv_logger])
+        self.dqn_model.model.fit([states, actions], actions * Q_values[:, None],
+                                 batch_size=batch_size, verbose=0, callbacks=[csv_logger])
 
     def load(self, name):
         self.dqn_model.model.load_weights(name)

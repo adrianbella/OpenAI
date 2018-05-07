@@ -102,17 +102,18 @@ if __name__ == "__main__":
 
             frame_count += 1
 
-            #  update target model every C = 12000 frames
-            if frame_count % 12000 == 0:
+            #  update target model every C = 10000 iteration
+            if frame_count % 40000 == 0:
                 agent.dqn_model.update_target_model()
             # ------------------------------------------
 
             #  start experience replay after 50000 frames
-            if frame_count > 50000 and t % 4 == 0:
-                agent.replay(batch_size, csv_handler.csv_file_handler)
-            # ------------------------------------------
+            if frame_count > 50000:
+                if t % 4 == 0:
+                    agent.replay(batch_size, csv_handler.csv_file_handler)
 
-            agent.decrease_epsilone()  # decrease the value of epsilone from 1.0 to 0.9 in 1.000.000 frames
+                agent.decrease_epsilone()  # decrease the value of epsilone from 1.0 to 0.9 in 1.000.000 frames
+            # ------------------------------------------
 
             if done:
                 logger.log_episode(i_episode, EPISODES, sum_reward, agent.epsilon, t, max_reward)
