@@ -1,7 +1,6 @@
 import random
 import numpy as np
-import time
-
+from random import randint
 from model import DQNModel
 from buffer import RingBuffer
 
@@ -44,7 +43,7 @@ class DQNAgent:
         next_states = np.zeros((batch_size, 4, 84, 84), dtype=float)
         dones = np.ones((batch_size, 4), dtype=bool)
 
-        mini_batch = random.sample(self.memory, batch_size)  # sample random mini_batch from D
+        mini_batch = self.get_minibatch(batch_size)  # sample random mini_batch from D
 
         i = 0
 
@@ -71,6 +70,13 @@ class DQNAgent:
         self.dqn_model.model.fit([states, actions], actions * Q_values[:, None],
                                  batch_size=batch_size, verbose=0, callbacks=[csv_logger])
 
+    def get_minibatch(self, batch_size):
+        mini_batch = []
+        for i in range(batch_size):
+            index = randint(0, self.memory.__len__() - 1)
+            mini_batch.append(self.memory.__getitem__(index))
+        return mini_batch
+
     def load(self, name):
         self.dqn_model.model.load_weights(name)
         self.dqn_model.update_target_model()
@@ -78,6 +84,6 @@ class DQNAgent:
     def save(self, name):
         self.dqn_model.model.save_weights(name)
 
-    def decrease_epsilone(self):
-        if self.epsilon > self.epsilon_min:
+    def decrease_epsilone(self, frame_count):
+        if self.epsilon > self.epsilon_min and frame_count > 250000:
             self.epsilon -= self.epsilon_decay

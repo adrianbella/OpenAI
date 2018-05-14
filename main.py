@@ -64,11 +64,17 @@ if __name__ == "__main__":
 
             #env.render()
 
-            #video.record(observation)  # start video-recording
+            if (10000 > frame_count > 0) \
+                    or (1010000 > frame_count > 1000000) \
+                    or (2010000 > frame_count > 2000000) \
+                    or (3010000 > frame_count > 3000000)\
+                    or (4010000 > frame_count > 4000000)\
+                    or (5010000 > frame_count > 5000000):
+                video.record(observation)  # start video-recording
 
             fi_t = CNN_input_stack[0:4]  # fi_t = fi(s_t)
 
-            #  check if last 30 actions was 0 and do random action if true
+            #  check if last 15 actions was 0 and do random action if true
             if len(last_30_actions) == 30:
                 if check_if_do_nothing(last_30_actions):
                     action = env.action_space.sample()
@@ -102,17 +108,17 @@ if __name__ == "__main__":
 
             frame_count += 1
 
-            #  update target model every C = 10000 iteration
-            if frame_count % 40000 == 0:
-                agent.dqn_model.update_target_model()
-            # ------------------------------------------
-
             #  start experience replay after 50000 frames
             if frame_count > 50000:
-                if t % 4 == 0:
-                    agent.replay(batch_size, csv_handler.csv_file_handler)
 
-                agent.decrease_epsilone()  # decrease the value of epsilone from 1.0 to 0.9 in 1.000.000 frames
+                agent.replay(batch_size, csv_handler.csv_file_handler)
+
+                #  update target model every C = 10000 iteration
+                if frame_count % 10000 == 0:
+                    agent.dqn_model.update_target_model()
+                # ------------------------------------------
+
+                agent.decrease_epsilone(frame_count)  # decrease the value of epsilone from 1.0 to 0.9 in 1.000.000 frames
             # ------------------------------------------
 
             if done:
