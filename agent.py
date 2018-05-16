@@ -22,6 +22,9 @@ class DQNAgent:
         state = state.astype('uint8')
         next_state = next_state.astype('uint8')
 
+        # all positive rewards == 1 all negative rewards == -1
+        reward = np.sign(reward)
+
         self.memory.append((state, action, reward, next_state, done))
 
     def action(self, fi_t, env_sample):
@@ -37,10 +40,10 @@ class DQNAgent:
 
     def replay(self, batch_size, csv_logger):
 
-        states = np.zeros((batch_size, 4, 84, 84), dtype=float)
-        actions = np.zeros((batch_size, 4), dtype=int)
-        rewards = np.zeros((batch_size, 1), dtype=float)
-        next_states = np.zeros((batch_size, 4, 84, 84), dtype=float)
+        states = np.zeros((batch_size, 4, 84, 84), dtype='float32')
+        actions = np.zeros((batch_size, 4), dtype='uint8')
+        rewards = np.zeros(batch_size, dtype='float32')
+        next_states = np.zeros((batch_size, 4, 84, 84), dtype='float32')
         dones = np.ones((batch_size, 4), dtype=bool)
 
         mini_batch = self.get_minibatch(batch_size)  # sample random mini_batch from D
@@ -49,8 +52,8 @@ class DQNAgent:
 
         for state, action, reward, next_state, done in mini_batch:
 
-            next_state = next_state.astype(float)
-            state = state.astype(float)
+            next_state = next_state.astype('float32')
+            state = state.astype('float32')
 
             states[i] = state
             actions[i][action] = 1
@@ -64,10 +67,10 @@ class DQNAgent:
 
         next_state_q_values[dones] = 0
 
-        Q_values = (rewards + self.gamma * np.max(next_state_q_values, axis=1))[0]
+        q_values = (rewards + self.gamma * np.max(next_state_q_values, axis=1))
 
         #  Trains the model for a fixed number of epochs (iterations on a dataset)
-        self.dqn_model.model.fit([states, actions], actions * Q_values[:, None],
+        self.dqn_model.model.fit([states, actions], actions * q_values[:, None],
                                  batch_size=batch_size, verbose=0, callbacks=[csv_logger])
 
     def get_minibatch(self, batch_size):
@@ -85,5 +88,5 @@ class DQNAgent:
         self.dqn_model.model.save_weights(name)
 
     def decrease_epsilone(self, frame_count):
-        if self.epsilon > self.epsilon_min and frame_count > 250000:
+        if self.epsilon > self.epsilon_min:
             self.epsilon -= self.epsilon_decay

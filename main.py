@@ -12,10 +12,26 @@ from logger import MyLogger
 
 
 def check_if_do_nothing(last_30_actions):
-    for i in last_30_actions:
-        if i > 0:
+    first = last_30_actions[0]
+    for i in range(0, last_30_actions.__len__()):
+        if last_30_actions[i] != first:
             return False
     return True
+
+
+def video_recording(obs):
+    if (10000 > frame_count > 0) \
+            or (510000 > frame_count > 500000) \
+            or (1010000 > frame_count > 1000000) \
+            or (1510000 > frame_count > 1000000) \
+            or (2010000 > frame_count > 2000000) \
+            or (2510000 > frame_count > 2000000) \
+            or (3010000 > frame_count > 3000000) \
+            or (3510000 > frame_count > 3000000) \
+            or (4010000 > frame_count > 4000000) \
+            or (4510000 > frame_count > 4000000) \
+            or (5010000 > frame_count > 5000000):
+        video.record(obs)  # start video-recording
 
 if __name__ == "__main__":
 
@@ -64,18 +80,12 @@ if __name__ == "__main__":
 
             #env.render()
 
-            if (10000 > frame_count > 0) \
-                    or (1010000 > frame_count > 1000000) \
-                    or (2010000 > frame_count > 2000000) \
-                    or (3010000 > frame_count > 3000000)\
-                    or (4010000 > frame_count > 4000000)\
-                    or (5010000 > frame_count > 5000000):
-                video.record(observation)  # start video-recording
+            video_recording(observation)
 
             fi_t = CNN_input_stack[0:4]  # fi_t = fi(s_t)
 
             #  check if last 15 actions was 0 and do random action if true
-            if len(last_30_actions) == 30:
+            if len(last_30_actions) == 10:
                 if check_if_do_nothing(last_30_actions):
                     action = env.action_space.sample()
                 else:
