@@ -23,7 +23,7 @@ class DQNAgent:
         next_state = next_state.astype('uint8')
 
         # all positive rewards == 1 all negative rewards == -1
-        reward = np.sign(reward)
+        #reward = np.sign(reward)
 
         self.memory.append((state, action, reward, next_state, done))
 
@@ -87,6 +87,6 @@ class DQNAgent:
     def save(self, name):
         self.dqn_model.model.save_weights(name)
 
-    def decrease_epsilone(self, frame_count):
+    def decrease_epsilone(self):
         if self.epsilon > self.epsilon_min:
             self.epsilon -= self.epsilon_decay

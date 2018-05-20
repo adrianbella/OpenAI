@@ -1,7 +1,6 @@
 from keras import Input, Model
 from keras.layers import Convolution2D
 from keras.layers import Dense, Flatten
-from keras.optimizers import Adam
 from keras import backend as K
 import keras
 
@@ -20,8 +19,10 @@ class DQNModel:
         observations_input = Input((4, 84, 84), name='observations')
         actions_input = Input((self.action_size,), name='mask')
 
+        normalized = keras.layers.Lambda(lambda x: x / 255.0)(observations_input)
+
         #  Add convolutional and normalization layers
-        hidden_conv_layer_1 = Convolution2D(filters=32, kernel_size=8, strides=4, activation='relu', data_format='channels_first')(observations_input)
+        hidden_conv_layer_1 = Convolution2D(filters=32, kernel_size=8, strides=4, activation='relu', data_format='channels_first')(normalized)
         hidden_conv_layer_2 = Convolution2D(filters=64, kernel_size=4, strides=2, activation='relu')(hidden_conv_layer_1)
         hidden_conv_layer_3 = Convolution2D(filters=64, kernel_size=3, strides=1, activation='relu')(hidden_conv_layer_2)
         # -------------------------------------------
@@ -37,7 +38,8 @@ class DQNModel:
 
         # configure learning process and initialize model
         model = Model(inputs=[observations_input, actions_input], output=filtered_output)
-        model.compile(loss=DQNModel.huber_loss, optimizer=Adam(lr=self.learning_rate))
+        model.compile(loss=DQNModel.huber_loss,
+                      optimizer=keras.optimizers.RMSprop(lr=self.learning_rate, rho=0.95, epsilon=0.01))
 
         return model
 
@@ -53,8 +55,8 @@ class DQNModel:
         return use_linear_term * linear_term + (1 - use_linear_term) * quadratic_term
 
     def update_target_model(self):
-        self.target_model = self.copy_model(self.model)  # copy weights from model to target_model
+        self.target_model = self.copy_model()  # copy weights from model to target_model
 
-    def copy_model(self, model):
-        model.save('model')
+    def copy_model(self):
+        self.model.save('model')
         return keras.models.load_model('model', custom_objects={'huber_loss': DQNModel.huber_loss})

@@ -30,7 +30,11 @@ def video_recording(obs):
             or (3510000 > frame_count > 3500000) \
             or (4010000 > frame_count > 4000000) \
             or (4510000 > frame_count > 4500000) \
-            or (5010000 > frame_count > 5000000):
+            or (5010000 > frame_count > 5000000) \
+            or (5510000 > frame_count > 5500000)\
+            or (6010000 > frame_count > 6000000)\
+            or (6510000 > frame_count > 6510000)\
+            or (7010000 > frame_count > 7000000):
         video.record(obs)  # start video-recording
 
 if __name__ == "__main__":
@@ -54,7 +58,7 @@ if __name__ == "__main__":
     csv_handler = MyCSVHandler(config)
 
     logger = MyLogger(config.section)
-    logger.log_config_parameters("./config.ini")# log the used parameter
+    logger.log_config_parameters("./config.ini")  # log the used parameter
 
     # Load saved Weigths if exits
     my_file = Path("./save/" + config.section + ".h5")
@@ -84,15 +88,15 @@ if __name__ == "__main__":
 
             fi_t = CNN_input_stack[0:4]  # fi_t = fi(s_t)
 
-            #  check if last 15 actions was 0 and do random action if true
+            #  check if last 30 actions was 0 and repeat actions 4 times
             if len(last_30_actions) == 30:
-                if check_if_do_nothing(last_30_actions):
+                if check_if_do_nothing(last_30_actions) and (t % 4 == 0):
                     action = env.action_space.sample()
-                else:
+                elif t % 4 == 0:
                     action = agent.action(fi_t, env.action_space.sample())
                 last_30_actions.pop(0)
                 last_30_actions.append(action)
-            else:
+            elif t % 4 == 0:
                 action = agent.action(fi_t, env.action_space.sample())
                 last_30_actions.append(action)
             # --------------------------------------------
@@ -101,7 +105,7 @@ if __name__ == "__main__":
 
             sum_reward += reward
 
-            if(sum_reward > max_reward):
+            if sum_reward > max_reward:
                 max_reward = sum_reward
 
             # overlap
@@ -121,14 +125,16 @@ if __name__ == "__main__":
             #  start experience replay after 50000 frames
             if frame_count > 50000:
 
-                agent.replay(batch_size, csv_handler.csv_file_handler)
+                #  update after every 4 actions
+                if t % 4 == 0:
+                    agent.replay(batch_size, csv_handler.csv_file_handler)
 
-                #  update target model every C = 10000 iteration
-                if frame_count % 10000 == 0:
+                #  update target model every C = 1250 iteration (10000[frames]/32[iterations] * 4[update frequency])
+                if frame_count % 1250 == 0:
                     agent.dqn_model.update_target_model()
                 # ------------------------------------------
 
-                agent.decrease_epsilone(frame_count)  # decrease the value of epsilone from 1.0 to 0.9 in 1.000.000 frames
+                agent.decrease_epsilone()  # decrease the value of epsilone from 1.0 to 0.1 in 1.000.000 frames
             # ------------------------------------------
 
             if done:
