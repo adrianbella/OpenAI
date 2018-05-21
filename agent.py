@@ -7,7 +7,7 @@ from buffer import RingBuffer
 
 class DQNAgent:
 
-    def __init__(self, env, action_size, config, batch_size):
+    def __init__(self, env, action_size, config):
         self.memory = RingBuffer(int(config.config_section_map()['memorysize']))
         self.gamma = float(config.config_section_map()['gamma'])    # discount rate
         self.epsilon = float(config.config_section_map()['epsilon'])  # exploration rate
@@ -22,12 +22,11 @@ class DQNAgent:
         state = state.astype('uint8')
         next_state = next_state.astype('uint8')
 
-        # all positive rewards == 1 all negative rewards == -1
-        #reward = np.sign(reward)
+        reward = np.sign(reward)
 
         self.memory.append((state, action, reward, next_state, done))
 
-    def action(self, fi_t, env_sample):
+    def action(self, fi_t, env_sample, csv_handler):
 
         num_random = random.uniform(0, 1)
 
@@ -36,6 +35,7 @@ class DQNAgent:
         else:
             fi_t = np.expand_dims(fi_t, axis=0)
             action = self.dqn_model.model.predict([fi_t, np.ones([1, self.action_size])])
+            csv_handler.write_q_values(action)
             return np.argmax(action[0])
 
     def replay(self, batch_size, csv_logger):
@@ -67,7 +67,7 @@ class DQNAgent:
 
         next_state_q_values[dones] = 0
 
-        q_values = (rewards + self.gamma * np.max(next_state_q_values, axis=1))
+        q_values = rewards + self.gamma * np.max(next_state_q_values, axis=1)
 
         #  Trains the model for a fixed number of epochs (iterations on a dataset)
         self.dqn_model.model.fit([states, actions], actions * q_values[:, None],

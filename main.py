@@ -1,7 +1,5 @@
 import gym as gym
 import numpy as np
-import psutil
-import os
 
 from pathlib import Path
 
@@ -11,11 +9,6 @@ from video import VideoRecorder
 from config import MyConfigParser
 from csvhandler import MyCSVHandler
 from logger import MyLogger
-
-
-def get_mem_usage():
-    process = psutil.Process(os.getpid())
-    return process.memory_info()
 
 
 def check_if_do_nothing(last_30_actions):
@@ -41,7 +34,12 @@ def video_recording(obs):
             or (5510000 > frame_count > 5500000)\
             or (6010000 > frame_count > 6000000)\
             or (6510000 > frame_count > 6510000)\
-            or (7010000 > frame_count > 7000000):
+            or (7010000 > frame_count > 7000000) \
+            or (7510000 > frame_count > 7500000) \
+            or (8010000 > frame_count > 8000000) \
+            or (8510000 > frame_count > 8500000) \
+            or (9010000 > frame_count > 9000000) \
+            or (9510000 > frame_count > 9500000):
         video.record(obs)  # start video-recording
 
 if __name__ == "__main__":
@@ -58,7 +56,7 @@ if __name__ == "__main__":
     batch_size = int(config.config_section_map()['batchsize'])
     EPISODES = int(config.config_section_map()['episodes'])
 
-    agent = DQNAgent(env, action_size, config, batch_size)
+    agent = DQNAgent(env, action_size, config)
 
     video = VideoRecorder(config.section)
 
@@ -82,6 +80,8 @@ if __name__ == "__main__":
         CNN_input_stack[3] = StateBuilder.pre_process_cv2(observation)
         CNN_input_stack[4] = StateBuilder.pre_process_cv2(observation)
 
+        fi_t = CNN_input_stack[0:4]  # fi_t = fi(s_t)
+
         last_30_actions = []
 
         done = False
@@ -89,22 +89,18 @@ if __name__ == "__main__":
 
         for t in range(500000):
 
-            #env.render()
-
             video_recording(observation)
 
-            fi_t = CNN_input_stack[0:4]  # fi_t = fi(s_t)
-
-            #  check if last 30 actions was 0 and repeat actions 4 times
+            #  check if last 30 actions was 0
             if len(last_30_actions) == 30:
-                if check_if_do_nothing(last_30_actions) and (t % 4 == 0):
+                if check_if_do_nothing(last_30_actions):
                     action = env.action_space.sample()
-                elif t % 4 == 0:
-                    action = agent.action(fi_t, env.action_space.sample())
+                else:
+                    action = agent.action(fi_t, env.action_space.sample(), csv_handler)
                 last_30_actions.pop(0)
                 last_30_actions.append(action)
-            elif t % 4 == 0:
-                action = agent.action(fi_t, env.action_space.sample())
+            else:
+                action = agent.action(fi_t, env.action_space.sample(), csv_handler)
                 last_30_actions.append(action)
             # --------------------------------------------
 
@@ -127,17 +123,19 @@ if __name__ == "__main__":
 
             agent.remember(fi_t, action, reward, fi_t1, done)  # Store transition (fi_t,a_t,r_t,fi_t+1) in D
 
+            fi_t = fi_t1
+
             frame_count += 1
 
             #  start experience replay after 50000 frames
-            if frame_count > 50000:
+            if frame_count > 500:
 
                 #  update after every 4 actions
                 if t % 4 == 0:
                     agent.replay(batch_size, csv_handler.csv_file_handler)
 
                 #  update target model every C = 1250 iteration (10000[frames]/32[iterations] * 4[update frequency])
-                if frame_count % 1250 == 0:
+                if frame_count % 10000 == 0:
                     agent.dqn_model.update_target_model()
                 # ------------------------------------------
 
@@ -159,9 +157,6 @@ if __name__ == "__main__":
 
             logger.log_10_avg_and_framecount((avg / len(last_ten_rewards)), frame_count)
             last_ten_rewards = []
-
-            mem = get_mem_usage()
-            print("mem usage: {}".format(mem))
         # ----------------------------------------------------
 
         # save weights after every 10 episodes
