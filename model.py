@@ -59,4 +59,4 @@ class DQNModel:
 
     def copy_model(self):
         self.model.save('model')
-        return keras.models.load_model('model', custom_objects={'huber_loss': DQNModel.huber_loss})
+        return keras.models.load_model('model', custom_objects={'huber_loss': DQNModel.huber_loss}, compile=False)

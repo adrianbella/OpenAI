@@ -1,5 +1,7 @@
 import gym as gym
 import numpy as np
+import psutil
+import os
 
 from pathlib import Path
 
@@ -9,6 +11,11 @@ from video import VideoRecorder
 from config import MyConfigParser
 from csvhandler import MyCSVHandler
 from logger import MyLogger
+
+
+def get_mem_usage():
+    process = psutil.Process(os.getpid())
+    return process.memory_info()
 
 
 def check_if_do_nothing(last_30_actions):
@@ -152,6 +159,9 @@ if __name__ == "__main__":
 
             logger.log_10_avg_and_framecount((avg / len(last_ten_rewards)), frame_count)
             last_ten_rewards = []
+
+            mem = get_mem_usage()
+            print("mem usage: {}".format(mem))
         # ----------------------------------------------------
 
         # save weights after every 10 episodes
